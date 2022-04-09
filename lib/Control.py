@@ -1,5 +1,3 @@
-from binascii import a2b_base64
-from termios import B1000000
 import RPi.GPIO as GPIO
 from smbus2 import smbus2
 
