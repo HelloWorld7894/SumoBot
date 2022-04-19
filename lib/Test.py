@@ -1,4 +1,4 @@
-from lib.Control import *
+from Control import *
 from time import sleep
 
 """
@@ -64,3 +64,10 @@ H-Bridge
 #Bridge.Backward(1)
 #Bridge.Left(5, "forward")
 #Bridge.Right(5, "forward")
+
+"""
+Servo
+"""
+
+#Servo1 = Servo(19)
+#Servo1.Rotate(100)

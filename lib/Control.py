@@ -261,3 +261,20 @@ class H_Bridge:
 
         sleep(seconds)
         H_Bridge.Stop()
+
+class Servo:
+    def __init__(self, pin):
+        self.pin = pin
+
+        GPIO.setup(pin, GPIO.OUT)
+        self.servo = GPIO.PWM(pin, 50)
+        self.servo.start(0)
+        
+        sleep(1)
+
+    def Rotate(self, angle):
+        Duty = round(DegreesToDuty * angle, 2)
+        self.servo.ChangeDutyCycle(Duty)
+        sleep(0.5)
+
+        GPIO.cleanup()
