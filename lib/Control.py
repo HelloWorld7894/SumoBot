@@ -156,9 +156,6 @@ class Camera:
     camera.resolution = (640, 480)
     camera.framerate = 32
 
-    RawCapture = PiRGBArray(camera, size=(640, 480))
-    sleep(0.1)
-
 
 
 class Laser_Ranger:

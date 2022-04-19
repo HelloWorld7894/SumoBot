@@ -1,5 +1,10 @@
+#local imports
 from lib.Control import *
 import Main
+
+#other imports
+import picamera
+import picamera.array
 
 def Startup():
     #Peripheals init
@@ -9,7 +14,7 @@ def Startup():
     sleep(1)
     #Accel object is also Gyro
 
-    Cam = Camera
+    Cam = Camera.camera
 
     ToF = Laser_Ranger.sensor
     sleep(1)
@@ -28,9 +33,17 @@ def Startup():
     ServoX = Servo(26)
 
     #test rotation
-    ServoY.Rotate(90)
-    ServoX.Rotate(90)
-    
+    #ServoY.Rotate(90)
+    #ServoX.Rotate(90)
+
+    DetectionTest(Cam, ToF, Accel, Line)
+
+def DetectionTest(Camera, ToF, Accel, Line):
+    #Cam test
+    with picamera.array.PiRGBArray(Camera) as output:
+        Camera.capture(output, "rgb")
+        print(output)
+
 
 if __name__ == "__main__":
     Startup()
