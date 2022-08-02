@@ -1,5 +1,6 @@
 from Control import *
 from time import sleep
+import RPi.GPIO as GPIO
 
 """
 Accelerometer
@@ -31,8 +32,9 @@ ToF
 #while True:
 #    distance = ToF.get_distance()
 #    sleep(0.1)
+#    print(distance)
 
-#rof.stop_ranging() #unreachable, but just showed how to stop ToF properly
+#ToF.stop_ranging() #unreachable, but just showed how to stop ToF properly
 
 """
 Line Sensor
@@ -69,5 +71,14 @@ H-Bridge
 Servo
 """
 
-#Servo1 = Servo(19)
-#Servo1.Rotate(100)
+#PENDING TESTING - testing successful
+
+#servo1, servo2 = Servo.Setup()
+#Servo.Start(servo1)
+#Servo.Start(servo2)
+
+#Servo.Rotate(servo1, 60)
+#Servo.Rotate(servo2, 45)
+
+#Servo.CleanRotation(servo1)
+#Servo.CleanRotation(servo2)

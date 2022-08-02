@@ -37,62 +37,14 @@ MEDIUM_RANGE = 2
 LONG_RANGE = 3
 
 #line sensor pins
-FRONT = [8, 9, 10]
-BACK = [1, 2, 3]
+FRONT = [21, 20, 16]
+BACK = [7, 8, 25]
 
 #H bridge pins
 A1 = 24
 B1 = 23
 A2 = 15
 B2 = 18
-
-class Servo:
-    def __init__(self, name): #name can be either X or Y
-        self.name = name
-        self.last_degrees = 0
-
-    def PinSetup(self, pinIndex, freq = 50): #default is 50hz
-        #pins are on address 19 and 20
-        GPIO.setup(pinIndex, GPIO.OUT)
-        self.servo = GPIO.PWM(pinIndex, freq)
-
-    def Start(self):
-        self.servo.start(0)
-        sleep(1)
-
-    def Rotate(self, degrees): #max degrees is 180
-        self.last_degrees = degrees
-
-        if degrees > 180:
-            print("degrees over 180!")
-            exit(2)
-        elif degrees < 0:
-            print("degrees cannot be negative!")
-            exit(2)
-        elif degrees == 0:
-            self.servo.ChangeDutyCycle(MIN_POS)
-            sleep(0.5)
-            self.servo.ChangeDutyCycle(0)
-            self.servo.stop()
-
-        elif degrees == 180:
-            self.servo.ChangeDutyCycle(MAX_POS)
-            sleep(0.5)
-            self.servo.ChangeDutyCycle(0)
-            self.servo.stop()
-        else:
-            Duty = round(DegreesToDuty * degrees)
-            self.servo.ChangeDutyCycle(Duty)
-            sleep(0.5)
-            self.servo.ChangeDutyCycle(0)
-            self.servo.stop()
-
-        GPIO.cleanup()
-    
-    def GetDegrees(self):
-        return self.last_degrees
-
-
 
 class Accelerometer:
     def __init__(self, address): #address is 0x68
@@ -145,10 +97,9 @@ class Accelerometer:
         Gy = gyro_y / 131.0
         Gz = gyro_z / 131.0
 
-        print("Gx=%.2f" %Gx, u'\u00b0'+ "/s", "\tGy=%.2f" %Gy, u'\u00b0'+ "/s", "\tGz=%.2f" %Gz, u'\u00b0'+ "/s", "\tAx=%.2f g" %Ax, "\tAy=%.2f g" %Ay, "\tAz=%.2f g" %Az) 	
+        #print("Gx=%.2f" %Gx, u'\u00b0'+ "/s", "\tGy=%.2f" %Gy, u'\u00b0'+ "/s", "\tGz=%.2f" %Gz, u'\u00b0'+ "/s", "\tAx=%.2f g" %Ax, "\tAy=%.2f g" %Ay, "\tAz=%.2f g" %Az) 	
         sleep(0.5)
-
-
+        return [Ax, Ay, Az], [Gx, Gy, Gz]
 
 class Camera:
     camera = PiCamera()
@@ -191,6 +142,7 @@ class Button:
 
 class H_Bridge:
     def Setup():
+
         GPIO.setup(A1, GPIO.OUT)
         GPIO.setup(B1, GPIO.OUT)
 
@@ -203,10 +155,11 @@ class H_Bridge:
 
         GPIO.output(A2, GPIO.LOW)
         GPIO.output(B2, GPIO.LOW)
-        GPIO.cleanup()
+        #GPIO.cleanup()
 
 
     def Forward(seconds):
+
         GPIO.output(A1, GPIO.LOW)
         GPIO.output(B1, GPIO.HIGH)
 
@@ -217,6 +170,7 @@ class H_Bridge:
         
 
     def Backward(seconds):
+        
         GPIO.output(A1, GPIO.HIGH)
         GPIO.output(B1, GPIO.LOW)
 
@@ -226,6 +180,7 @@ class H_Bridge:
         H_Bridge.Stop()
 
     def Left(seconds, type):
+
         if type == "backward":
             GPIO.output(A1, GPIO.LOW)
             GPIO.output(B1, GPIO.HIGH)
@@ -243,6 +198,7 @@ class H_Bridge:
         H_Bridge.Stop()
 
     def Right(seconds, type):
+
         if type == "backward":
             GPIO.output(A1, GPIO.LOW)
             GPIO.output(B1, GPIO.LOW)
@@ -260,18 +216,27 @@ class H_Bridge:
         H_Bridge.Stop()
 
 class Servo:
-    def __init__(self, pin):
-        self.pin = pin
+    def Setup():
+        GPIO.setup(19, GPIO.OUT)
+        GPIO.setup(26, GPIO.OUT)
 
-        GPIO.setup(pin, GPIO.OUT)
-        self.servo = GPIO.PWM(pin, 50)
-        self.servo.start(0)
-        
-        sleep(1)
+        servo1 = GPIO.PWM(19, 50)
+        servo2 = GPIO.PWM(26, 50)
 
-    def Rotate(self, angle):
-        Duty = round(DegreesToDuty * angle, 2)
-        self.servo.ChangeDutyCycle(Duty)
+        return servo1, servo2
+
+    def Start(servo):
+        servo.start(0)
+
+    def Stop(servo):
+        servo.stop()
+
+    def Rotate(servo, angle):
+        Duty = round(DegreesToDuty * angle)
+        servo.ChangeDutyCycle(Duty)
         sleep(0.5)
 
-        GPIO.cleanup()
+    def CleanRotation(servo):
+        servo.ChangeDutyCycle(5)
+        sleep(2)
+
