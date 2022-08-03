@@ -137,7 +137,7 @@ class Button:
     def Check():
         input = GPIO.input(5)
         return input
-
+        
 
 
 class H_Bridge:
@@ -235,6 +235,8 @@ class Servo:
         Duty = round(DegreesToDuty * angle)
         servo.ChangeDutyCycle(Duty)
         sleep(0.5)
+
+        Servo.CleanRotation(servo)
 
     def CleanRotation(servo):
         servo.ChangeDutyCycle(5)

@@ -31,30 +31,15 @@ def Startup():
     Bridge = H_Bridge
     Bridge.Setup()
 
-    """
-    PENDING TESTING
-    #ServoY = Servo(19)
-    #ServoX = Servo(26)
+    servo1, servo2 = Servo.Setup()
+    Servo.Start(servo1)
+    Servo.Start(servo2)
 
-    #ServoY.Start()
-    #ServoX.Start()
-    sleep(0.2)
+    DetectionTest(Cam, ToF, Accel, [servo1, servo2])
 
+    return Cam, ToF, Accel, Line, Start_Button, Bridge, [servo1, servo2]
 
-    #test rotation
-    #ServoY.Rotate(90)
-    #ServoX.Rotate(90)
-    #sleep(0.5)
-
-    #ServoY.CleanRotation()
-    #ServoX.CleanRotation()
-
-    #ServoY.Stop()
-    #ServoX.Stop()
-    """
-    DetectionTest(Cam, ToF, Accel, Line)
-
-def DetectionTest(Camera, ToF, Accel, Line):
+def DetectionTest(Camera, ToF, Accel, servos):
     #Cam test
     with picamera.array.PiRGBArray(Camera) as output:
         Camera.capture(output, "rgb")
@@ -78,9 +63,14 @@ def DetectionTest(Camera, ToF, Accel, Line):
             exit(2)
     
     #accelerometer and gyro
-    Accel_data1, Gyro_data1 = Accel.read_data_all()
-    
+    Accel_data, Gyro_data = Accel.read_data_all()
+    if None in Accel_data and None in Gyro_data:
+        print("ERROR getting data from Accelerometer and Gyrom: PER_INIT")
+        exit(1)
 
+    #Simple servo test
+    Servo.Rotate(servos[1], 60)
+    Servo.Rotate(servos[2], 60)
 
-if __name__ == "__main__":
-    Startup()
+    Servo.Rotate(servos[1], 90)
+    Servo.Rotate(servos[2], 90)
