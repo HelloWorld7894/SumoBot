@@ -1,5 +1,7 @@
 import RPi.GPIO as GPIO
 from smbus2 import smbus2
+import sys
+import os
 
 from picamera import PiCamera
 from picamera.array import PiRGBArray
@@ -7,6 +9,9 @@ from picamera.array import PiRGBArray
 import VL53L1X
 
 from time import sleep
+
+#just to import initial switch
+from Main import Switch
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
@@ -132,11 +137,14 @@ class Line_Sensor:
 
 class Button:
     def Setup():
-        GPIO.setup(5, GPIO.IN)
+        GPIO.setup(12, GPIO.IN)
+        GPIO.add_event_detect(12, GPIO.RISING, callback=Button.ButtonCallback)
     
-    def Check():
-        input = GPIO.input(5)
-        return input
+    def ButtonCallback(channel):
+        if Switch: 
+            Switch = False
+            os.execv(sys.argv[0], sys.argv) #restart the program and wait for initial switch
+        else: Switch = True
         
 
 
