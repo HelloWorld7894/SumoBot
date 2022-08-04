@@ -1,6 +1,5 @@
 #local imports
 from lib.Control import *
-import Main
 
 #other imports
 import picamera
@@ -25,9 +24,6 @@ def Startup():
     Line = Line_Sensor
     Line.Setup()
 
-    Start_Button = Button
-    Start_Button.Setup()
-
     Bridge = H_Bridge
     Bridge.Setup()
 
@@ -37,7 +33,7 @@ def Startup():
 
     DetectionTest(Cam, ToF, Accel, [servo1, servo2])
 
-    return Cam, ToF, Accel, Line, Start_Button, Bridge, [servo1, servo2]
+    return Cam, ToF, Accel, Line, Bridge, [servo1, servo2]
 
 def DetectionTest(Camera, ToF, Accel, servos):
     #Cam test
@@ -46,6 +42,7 @@ def DetectionTest(Camera, ToF, Accel, servos):
         if len(output.array) == 0:
             print("ERROR getting data from camera: PER_INIT")
             exit(2)
+    print("Picamera test passed...")
 
     #Time of flight sensor
     Dist = []
@@ -61,16 +58,18 @@ def DetectionTest(Camera, ToF, Accel, servos):
         if D < 0:
             print("ERROR getting data from ToF: PER_INIT")
             exit(2)
+    print("ToF test passed...")
     
     #accelerometer and gyro
     Accel_data, Gyro_data = Accel.read_data_all()
     if None in Accel_data and None in Gyro_data:
         print("ERROR getting data from Accelerometer and Gyrom: PER_INIT")
         exit(1)
+    print("Accelerometer and Gyro test passed...")
 
     #Simple servo test
+    Servo.Rotate(servos[0], 60)
     Servo.Rotate(servos[1], 60)
-    Servo.Rotate(servos[2], 60)
 
+    Servo.Rotate(servos[0], 90)
     Servo.Rotate(servos[1], 90)
-    Servo.Rotate(servos[2], 90)
