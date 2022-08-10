@@ -103,9 +103,6 @@ class Accelerometer:
 
 class Camera:
     camera = PiCamera()
-    camera.rotation = 180
-    camera.resolution = (640, 480)
-    camera.framerate = 32
 
 
 

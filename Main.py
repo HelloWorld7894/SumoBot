@@ -19,15 +19,16 @@ class Button:
     Switch = False
 
     def Setup():
-        GPIO.setup(12, GPIO.IN)
+        GPIO.setup(12, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.add_event_detect(12, GPIO.RISING, callback=Button.ButtonCallback)
     
     def ButtonCallback(channel):
         sleep(0.2)
 
         if Button.Switch: 
-            Button.Switch = False
-            os.execv(sys.executable, ["python"] + [sys.argv[0]]) #restart the program and wait for initial switch
+            #Button.Switch = False
+            #os.execv(sys.executable, ["python"] + [sys.argv[0]]) #restart the program and wait for initial switch
+            exit(3)
         else: 
             Button.Switch = True
 
@@ -41,6 +42,8 @@ def Run(Cam, ToF, Accel, Line, Bridge, servos):
 
     for frame in Cam.capture_continuous(rawCapture, format="bgr", use_video_port = True):
         image = frame.array
+        rawCapture.truncate(0)
+        rawCapture.seek(0)
 
         cv2.imshow("Frame", image)
         cv2.waitKey(1)

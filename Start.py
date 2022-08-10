@@ -2,7 +2,7 @@
 from lib.Control import *
 
 #other imports
-import picamera
+from picamera import PiCamera
 import picamera.array
 from time import sleep
 
@@ -15,6 +15,9 @@ def Startup():
     #Accel object is also Gyro
 
     Cam = Camera.camera
+    Cam.rotation = 180
+    Cam.resolution = (640, 480)
+    Cam.framerate = 32
 
     ToF = Laser_Ranger.sensor
     sleep(1)
@@ -31,18 +34,18 @@ def Startup():
     Servo.Start(servo1)
     Servo.Start(servo2)
 
-    DetectionTest(Cam, ToF, Accel, [servo1, servo2])
+    DetectionTest(ToF, Accel, [servo1, servo2])
 
     return Cam, ToF, Accel, Line, Bridge, [servo1, servo2]
 
-def DetectionTest(Camera, ToF, Accel, servos):
+def DetectionTest(ToF, Accel, servos):
     #Cam test
-    with picamera.array.PiRGBArray(Camera) as output:
-        Camera.capture(output, "rgb")
-        if len(output.array) == 0:
-            print("ERROR getting data from camera: PER_INIT")
-            exit(2)
-    print("Picamera test passed...")
+    #with picamera.array.PiRGBArray(Camera) as output:
+    #    Camera.capture(output, "rgb")
+    #    if len(output.array) == 0:
+    #        print("ERROR getting data from camera: PER_INIT")
+    #        exit(2)
+    #print("Picamera test passed...")
 
     #Time of flight sensor
     Dist = []
