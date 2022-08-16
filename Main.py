@@ -4,6 +4,7 @@ from time import sleep
 #Picamera
 from picamera.array import PiRGBArray
 from picamera import PiCamera  #kinda unused ngl
+import Camera #library for camera algorithms
 
 #Image modification libs
 import cv2
@@ -16,6 +17,7 @@ import RPi.GPIO as GPIO
 
 #GPIO event button
 class Button:
+    Iter = 0
     Switch = False
 
     def Setup():
@@ -24,12 +26,13 @@ class Button:
     
     def ButtonCallback(channel):
         sleep(0.2)
+        print("Invoked start button")
 
         if Button.Switch: 
             #Button.Switch = False
             #os.execv(sys.executable, ["python"] + [sys.argv[0]]) #restart the program and wait for initial switch
             exit(3)
-        else: 
+        else:
             Button.Switch = True
 
 def Run(Cam, ToF, Accel, Line, Bridge, servos):
