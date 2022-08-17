@@ -4,7 +4,7 @@ from time import sleep
 #Picamera
 from picamera.array import PiRGBArray
 from picamera import PiCamera  #kinda unused ngl
-import Camera #library for camera algorithms
+import lib.Camera as Camera #library for camera algorithms
 
 #Image modification libs
 import cv2
@@ -28,29 +28,25 @@ class Button:
         sleep(0.2)
         print("Invoked start button")
 
-        if Button.Switch: 
-            #Button.Switch = False
-            #os.execv(sys.executable, ["python"] + [sys.argv[0]]) #restart the program and wait for initial switch
-            exit(3)
-        else:
-            Button.Switch = True
+        rawCapture = PiRGBArray(Cam, size = (640, 480))
+        sleep(0.1)
 
-def Run(Cam, ToF, Accel, Line, Bridge, servos):
-    
-    #Camera data extraction
-    rawCapture = PiRGBArray(Cam, size = (640, 480))
-    sleep(0.1)
+        print("START")
 
-    print("START")
+        #Camera data extraction
+        for frame in Cam.capture_continuous(rawCapture, format="bgr", use_video_port = True):
 
-    for frame in Cam.capture_continuous(rawCapture, format="bgr", use_video_port = True):
-        image = frame.array
-        rawCapture.truncate(0)
-        rawCapture.seek(0)
+            if GPIO.input(12) == GPIO.LOW:
+                print("Exit")
+                exit(1)
 
-        cv2.imshow("Frame", image)
-        cv2.waitKey(1)
-    
+            image = frame.array
+            rawCapture.truncate(0)
+            rawCapture.seek(0)
+
+            cv2.imshow("Frame", image)
+            cv2.waitKey(1)
+
 """
 INIT
 """
@@ -59,6 +55,4 @@ Start_Button = Button
 Start_Button.Setup()
 
 while True:
-    if Start_Button.Switch == True:
-        #START
-        Run(Cam, ToF, Accel, Line, Bridge, servos)
+    pass #Very weird, i know, but its for initial loop
