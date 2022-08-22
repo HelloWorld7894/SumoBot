@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.cluster import KMeans
 from scipy import stats
 
-def LBdetection(frame): #TODO: setup for more compact than passing whole frame
+def LBdetection(full_image): #TODO: setup for more compact than passing whole frame
     #line break detection (to detect coordinations and size of object in camera feed)
     #algorithm:
     #BGR -> grayscale -> mean blur -> threshold -> rescaling to bitmap
@@ -12,14 +12,12 @@ def LBdetection(frame): #TODO: setup for more compact than passing whole frame
     # -> slicing -> contours -> computing centroids -> kmeans 
     # -> object bounding rect
 
-    
-    full_image = frame.array
-    f_height, f_width, f_channels = full_image.shape
     """
     TODO: setup, test and clean
     rawCapture.truncate(0)
     rawCapture.seek(0)
     """
+    f_height, f_width, channels = full_image.shape
 
     image = full_image[int(f_height/2):f_height]
     im_height, im_width, im_channels = image.shape

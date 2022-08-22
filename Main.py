@@ -4,11 +4,15 @@ from time import sleep
 #Picamera
 from picamera.array import PiRGBArray
 from picamera import PiCamera  #kinda unused ngl
+
 import lib.Camera as Camera #library for camera algorithms
+import lib.Peripheals as Peripheals #library for laser_ranger, accelerometer and line sensors
+
+from lib.Multithreading import Thread_Inherit #Running this script in more threads
 
 #Image modification libs
 import cv2
-import numpy
+import numpy as np
 
 #System libs
 import sys
@@ -35,22 +39,31 @@ class Button:
 
         #Camera data extraction
         for frame in Cam.capture_continuous(rawCapture, format="bgr", use_video_port = True):
+            rawCapture.truncate(0)
+            rawCapture.seek(0)
 
             if GPIO.input(12) == GPIO.LOW:
                 print("Exit")
                 exit(1)
 
-            image = frame.array
-            rawCapture.truncate(0)
-            rawCapture.seek(0)
+            #image conversion
+            full_image = frame.array
 
-            cv2.imshow("Frame", image)
-            cv2.waitKey(1)
+            #ToF setup
+            ToF_Ranger = Peripheals.Setup()
+
+            #Multithreading setup
+            Thread1 = Thread_Inherit(target=Camera.LBdetection, args=(full_image, ))
+            Thread2 = Thread_Inherit(target=Peripheals.GetDistances, args=(ToF_Ranger, Accel, Line, ))
+            
+            #start
+            Thread1.start()
+            Thread2.start()
 
 """
 INIT
 """
-Cam, ToF, Accel, Line, Bridge, servos = Startup() #Retrieving sensor objects
+Cam, Peripheals, Accel, Line, Bridge, servos = Startup() #Retrieving sensor objects
 Start_Button = Button
 Start_Button.Setup()
 

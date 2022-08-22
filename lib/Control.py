@@ -16,6 +16,8 @@ DEFAULT_POS = 7
 MIN_POS = 3
 MAX_POS = 12    
 DegreesToDuty = 0.066666667 #12 / 180
+Degree_X = 0
+Degree_Y = 0
 
 #MPU6050 Registers and their Address
 PWR_MGMT_1   = 0x6B
@@ -102,7 +104,7 @@ class Accelerometer:
         return [Ax, Ay, Az], [Gx, Gy, Gz]
 
 class Camera:
-    camera = PiCamera()
+    camera = PiCamera() #TODO: this is also pretty much stupid, rewrite it
 
 
 
@@ -203,6 +205,7 @@ class H_Bridge:
         H_Bridge.Stop()
 
 class Servo:
+
     def Setup():
         GPIO.setup(19, GPIO.OUT)
         GPIO.setup(26, GPIO.OUT)
@@ -218,7 +221,11 @@ class Servo:
     def Stop(servo):
         servo.stop()
 
-    def Rotate(servo, angle):
+    def Rotate(servo, angle, axis):
+        #could be implemented better but i dont care if it works
+        if axis == "X": Degree_X = angle
+        elif axis == "Y": Degree_Y = angle
+
         Duty = round(DegreesToDuty * angle)
         servo.ChangeDutyCycle(Duty)
         sleep(0.5)
