@@ -14,10 +14,14 @@ GPIO.setwarnings(False)
 #variables for servos
 DEFAULT_POS = 7
 MIN_POS = 3
-MAX_POS = 12    
+MAX_POS = 12 
+#conversion   
 DegreesToDuty = 0.066666667 #12 / 180
-Degree_X = 0
-Degree_Y = 0
+DistInSec = 11.9 #1/8 obvodu otáčení robota ku 1 otáčce za 1 sekundu
+DegreesToDist = 0.26 #by computations 90 degrees equals 23.4 cm -> 1 degree 0.26 cm
+#variables
+Degrees = 0
+LastRotation = False
 
 #MPU6050 Registers and their Address
 PWR_MGMT_1   = 0x6B
@@ -118,7 +122,6 @@ class Line_Sensor:
     def Setup():
         for pin in (FRONT + BACK):
             GPIO.setup(pin, GPIO.IN)
-
     def GetLineData():
         values = []
 
@@ -147,28 +150,28 @@ class H_Bridge:
         #GPIO.cleanup()
 
 
-    def Forward(seconds):
+    def Forward(dist):
 
         GPIO.output(A1, GPIO.LOW)
         GPIO.output(B1, GPIO.HIGH)
 
         GPIO.output(A2, GPIO.LOW)
         GPIO.output(B2, GPIO.HIGH)
-        sleep(seconds)
+        sleep(dist / DistInSec)
         H_Bridge.Stop()
         
 
-    def Backward(seconds):
+    def Backward(dist):
         
         GPIO.output(A1, GPIO.HIGH)
         GPIO.output(B1, GPIO.LOW)
 
         GPIO.output(A2, GPIO.HIGH)
         GPIO.output(B2, GPIO.LOW)
-        sleep(seconds)
+        sleep(dist / DistInSec)
         H_Bridge.Stop()
 
-    def Left(seconds, type):
+    def Left(dist, type):
 
         if type == "backward":
             GPIO.output(A1, GPIO.LOW)
@@ -183,10 +186,10 @@ class H_Bridge:
             GPIO.output(A2, GPIO.LOW)
             GPIO.output(B2, GPIO.LOW)
 
-        sleep(seconds)
+        sleep(dist / DistInSec)
         H_Bridge.Stop()
 
-    def Right(seconds, type):
+    def Right(dist, type):
 
         if type == "backward":
             GPIO.output(A1, GPIO.LOW)
@@ -201,7 +204,7 @@ class H_Bridge:
             GPIO.output(A2, GPIO.HIGH)
             GPIO.output(B2, GPIO.LOW)
 
-        sleep(seconds)
+        sleep(dist / DistInSec)
         H_Bridge.Stop()
 
 class Servo:
@@ -211,9 +214,9 @@ class Servo:
         GPIO.setup(26, GPIO.OUT)
 
         servo1 = GPIO.PWM(19, 50)
-        servo2 = GPIO.PWM(26, 50)
+        #servo2 = GPIO.PWM(26, 50)
 
-        return servo1, servo2
+        return servo1#, servo2
 
     def Start(servo):
         servo.start(0)
@@ -221,10 +224,9 @@ class Servo:
     def Stop(servo):
         servo.stop()
 
-    def Rotate(servo, angle, axis):
+    def Rotate(servo, angle):
         #could be implemented better but i dont care if it works
-        if axis == "X": Degree_X = angle
-        elif axis == "Y": Degree_Y = angle
+        Degrees = angle
 
         Duty = round(DegreesToDuty * angle)
         servo.ChangeDutyCycle(Duty)

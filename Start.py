@@ -30,15 +30,15 @@ def Startup():
     Bridge = H_Bridge
     Bridge.Setup()
 
-    servo1, servo2 = Servo.Setup()
+    servo1 = Servo.Setup()
     Servo.Start(servo1)
-    Servo.Start(servo2)
+    #Servo.Start(servo2)
 
-    DetectionTest(ToF, Accel, [servo1, servo2])
+    DetectionTest(ToF, Accel, servo1)
 
-    return Cam, ToF, Accel, Line, Bridge, [servo1, servo2]
+    return Cam, ToF, Accel, Line, Bridge, servo1
 
-def DetectionTest(ToF, Accel, servos):
+def DetectionTest(ToF, Accel, servo):
     #Cam test
     #with picamera.array.PiRGBArray(Camera) as output:
     #    Camera.capture(output, "rgb")
@@ -71,8 +71,5 @@ def DetectionTest(ToF, Accel, servos):
     print("Accelerometer and Gyro test passed...")
 
     #Simple servo test
-    Servo.Rotate(servos[0], 60)
-    Servo.Rotate(servos[1], 60)
-
-    Servo.Rotate(servos[0], 90)
-    Servo.Rotate(servos[1], 90)
+    Servo.Rotate(servo, 80)
+    Servo.Rotate(servo, 90)

@@ -5,8 +5,10 @@ from time import sleep
 from picamera.array import PiRGBArray
 from picamera import PiCamera  #kinda unused ngl
 
-import lib.Camera as Camera #library for camera algorithms
+import lib.Camera as Camera
+import lib.Control as Control #library for camera algorithms
 import lib.Peripheals as Peripheals #library for laser_ranger, accelerometer and line sensors
+from lib.Mapping import *
 
 from lib.Multithreading import Thread_Inherit #Running this script in more threads
 
@@ -14,10 +16,35 @@ from lib.Multithreading import Thread_Inherit #Running this script in more threa
 import cv2
 import numpy as np
 
+
 #System libs
 import sys
 import os
 import RPi.GPIO as GPIO
+import random
+
+#functions
+
+#happens when robot touches lines
+def EscapeFront(channel):
+    Bridge.Forward(7) #7cm escape
+
+    #this is such a stupid way of decision making #TODO: rework!
+    choice = random.randint(0, 1)
+    if choice == 1:
+        Bridge.Right(6, "forward")
+    else:
+        Bridge.Left(6, "forward")
+
+def EscapeBack(channel):
+    Bridge.Backward(7)
+    
+    #same here
+    choice = random.randint(0, 1)
+    if choice == 1:
+        Bridge.Right(6, "backward")
+    else:
+        Bridge.Left(6, "backward")
 
 #GPIO event button
 class Button:
@@ -60,12 +87,61 @@ class Button:
             Thread1.start()
             Thread2.start()
 
+            #Getting output
+            ApproxPos, Boundaries = Thread1.join() #TODO: finish
+            Data = Thread2.join()
+
+            Thread1.kill()
+            Thread2.kill()
+
+            #TODO: koukni se jestli máš správně multithreading!
+
+            #check if rotation was invoked
+            if Control.LastRotation:
+                #Charge (5cm)
+                Bridge.Forward(5)
+                Control.LastRotation = False
+
+            #checking distance
+            dist_dev = Peripheals.std_dist - Data[2][0]
+            if abs(dist_dev) > 0.75 and dist_dev > 0: #in case that laser ranger would range off track
+                #object detected
+                Degrees_center = Control.Degrees - 90
+                Dist = Control.DegreesToDist * abs(Degrees_center)
+                if Degrees_center > 0:
+                    #turn right
+                    Bridge.Right(Dist, "forward")
+                else:
+                    #turn left
+                    Bridge.Left(Dist, "forward")
+
+                servo.Rotate(90)
+                
+                Control.LastRotation = True
+
+            else:
+                #Camera centering
+                DegreeChange = Camera.CameraCenter(ApproxPos)
+                NewDegrees = Control.Degrees + DegreeChange
+                servo.Rotate(NewDegrees)
+
+                #Camera random centering
+
+            
 """
 INIT
 """
-Cam, Peripheals, Accel, Line, Bridge, servos = Startup() #Retrieving sensor objects
+
+Cam, Peripheals, Accel, Line, Bridge, servo = Startup() #Retrieving sensor objects
 Start_Button = Button
 Start_Button.Setup()
+
+for pin in (Control.FRONT + Control.BACK):
+            GPIO.setup(pin, GPIO.IN)
+            if pin in Control.FRONT:
+                GPIO.add_event_detect(pin, GPIO.HIGH, callback=EscapeBack)
+            else:
+                GPIO.add_event_detect(pin, GPIO.HIGH, callback=EscapeFront)
 
 while True:
     pass #Very weird, i know, but its for initial loop

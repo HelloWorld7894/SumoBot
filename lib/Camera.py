@@ -3,7 +3,23 @@ import numpy as np
 from sklearn.cluster import KMeans
 from scipy import stats
 
-def LBdetection(full_image): #TODO: setup for more compact than passing whole frame
+def CameraCenter(ApproxPosition):
+    #returns degrees to rotate camera
+    #ApproxPosition is array in format: [[y1, x1], [y2, x2]]
+
+    Center = [240, 320]
+    #computing approxPosition Center on x axis
+    ObjCenter = round(ApproxPosition[0][1] + ApproxPosition[1][1] / 2)
+    ObjCenter_dev =  ObjCenter - Center[1]
+
+    #lets assume that camera field is 80 degrees range
+    PixelsToDegrees = 0.125 * ObjCenter_dev
+    #i assumed that because i sliced the image to 8 slices (every slice equals 10 degrees) => 0.125
+
+    return PixelsToDegrees
+
+
+def LBdetection(full_image):
     #line break detection (to detect coordinations and size of object in camera feed)
     #algorithm:
     #BGR -> grayscale -> mean blur -> threshold -> rescaling to bitmap
