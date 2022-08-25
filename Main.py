@@ -118,8 +118,26 @@ class Button:
 
             #check if rotation was invoked
             if Control.LastRotation:
-                #Charge (5cm)
-                Bridge.Forward(5)
+                #Charge
+                if len(Boundaries) == 0:
+                    #5cm
+                    Bridge.Forward(5)
+                else:
+                    #Controlling charge by boundaries
+                    if Boundaries[0] <= 60:
+                        Dist = Control.DegreesToDist * 45
+                        Bridge.Right(Dist)
+                    elif 60 > Boundaries[0] <= 120:
+                        Dist = Control.DegreesToDist * 90
+                        Bridge.Right(Dist)
+                    elif 120 > Boundaries[0] <= 180:
+                        Dist = Control.DegreesToDist * 90
+                        Bridge.Left(Dist)
+                    else:
+                        Dist = Control.DegreesToDist * 45
+                        Bridge.Left(Dist)
+
+                    Bridge.Forward(Boundaries[1] / 32)
                 Control.LastRotation = False
 
             #checking distance
