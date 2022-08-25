@@ -1,18 +1,8 @@
-from Control import *
 import math
 
 #some definitions
 Angle = 70 #TODO: measure angle correctly
 std_dist = 13 / math.cos(Angle)
-
-def ToFsetup():
-    ToF = Laser_Ranger.sensor
-    ToF.start_ranging(SHORT_RANGE)
-    return ToF
-
-def Stop(Ranger_Object):
-    Ranger_Object.stop_ranging()
-    Ranger_Object.close()
 
 def Get_data(Ranger_object, Accel, Line):
     #getting distance, acceleration, line

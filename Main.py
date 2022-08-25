@@ -26,7 +26,7 @@ import random
 #functions
 
 #happens when robot touches lines
-def EscapeFront(channel):
+def EscapeFront():
     Bridge.Forward(7) #7cm escape
 
     #this is such a stupid way of decision making #TODO: rework!
@@ -36,7 +36,7 @@ def EscapeFront(channel):
     else:
         Bridge.Left(6, "forward")
 
-def EscapeBack(channel):
+def EscapeBack():
     Bridge.Backward(7)
     
     #same here
@@ -45,6 +45,15 @@ def EscapeBack(channel):
         Bridge.Right(6, "backward")
     else:
         Bridge.Left(6, "backward")
+
+def ToFsetup(Ranger):
+    print("ToF started")
+    Ranger.start_ranging(Control.SHORT_RANGE)
+
+def ToFstop(Ranger):
+    print("ToF closed")
+    Ranger.stop_ranging()
+    Ranger.close()
 
 #GPIO event button
 class Button:
@@ -62,6 +71,9 @@ class Button:
         rawCapture = PiRGBArray(Cam, size = (640, 480))
         sleep(0.1)
 
+        #ToF setup
+        ToFsetup(Laser_Ranger)
+
         print("START")
 
         #Camera data extraction
@@ -69,19 +81,24 @@ class Button:
             rawCapture.truncate(0)
             rawCapture.seek(0)
 
+            for i in Control.FRONT:
+                if GPIO.input(i) == 1:
+                    EscapeBack()
+            for i in Control.BACK:
+                if GPIO.input(i) == 1:
+                    EscapeFront()
+
             if GPIO.input(12) == GPIO.LOW:
                 print("Exit")
+                ToFstop(Laser_Ranger)
                 exit(1)
 
             #image conversion
             full_image = frame.array
-
-            #ToF setup
-            ToF_Ranger = Peripheals.Setup()
-
+            
             #Multithreading setup
             Thread1 = Thread_Inherit(target=Camera.LBdetection, args=(full_image, ))
-            Thread2 = Thread_Inherit(target=Peripheals.GetDistances, args=(ToF_Ranger, Accel, Line, ))
+            Thread2 = Thread_Inherit(target=Peripheals.Get_data, args=(Laser_Ranger, Accel, Line, ))
             
             #start
             Thread1.start()
@@ -94,7 +111,10 @@ class Button:
             Thread1.kill()
             Thread2.kill()
 
-            #TODO: koukni se jestli máš správně multithreading!
+            #ApproxPos, Boundaries = Camera.LBdetection(full_image)
+            #Data = Peripheals.Get_data(Laser_Ranger, Accel, Line)
+
+            print(ApproxPos, Boundaries)
 
             #check if rotation was invoked
             if Control.LastRotation:
@@ -120,28 +140,24 @@ class Button:
                 Control.LastRotation = True
 
             else:
-                #Camera centering
-                DegreeChange = Camera.CameraCenter(ApproxPos)
-                NewDegrees = Control.Degrees + DegreeChange
-                servo.Rotate(NewDegrees)
+                if len(ApproxPos) != 0:
+                    #Camera centering
+                    DegreeChange = Camera.CameraCenter(ApproxPos)
+                    NewDegrees = Control.Degrees + DegreeChange
+                    Control.Servo.Rotate(servo, NewDegrees)
 
-                #Camera random centering
-
+                else:
+                    #Camera random centering
+                    angle = random.randint(0, 180)
+                    Control.Servo.Rotate(servo, angle)
             
 """
 INIT
 """
 
-Cam, Peripheals, Accel, Line, Bridge, servo = Startup() #Retrieving sensor objects
+Cam, Laser_Ranger, Accel, Line, Bridge, servo = Startup() #Retrieving sensor objects
 Start_Button = Button
 Start_Button.Setup()
-
-for pin in (Control.FRONT + Control.BACK):
-            GPIO.setup(pin, GPIO.IN)
-            if pin in Control.FRONT:
-                GPIO.add_event_detect(pin, GPIO.HIGH, callback=EscapeBack)
-            else:
-                GPIO.add_event_detect(pin, GPIO.HIGH, callback=EscapeFront)
 
 while True:
     pass #Very weird, i know, but its for initial loop

@@ -6,18 +6,39 @@ from scipy import stats
 def CameraCenter(ApproxPosition):
     #returns degrees to rotate camera
     #ApproxPosition is array in format: [[y1, x1], [y2, x2]]
+    PixelsToDegrees = 0
 
-    Center = [240, 320]
-    #computing approxPosition Center on x axis
-    ObjCenter = round(ApproxPosition[0][1] + ApproxPosition[1][1] / 2)
-    ObjCenter_dev =  ObjCenter - Center[1]
+    if len(ApproxPosition) != 0:
+        Center = [240, 320]
+        #computing approxPosition Center on x axis
+        ObjCenter = round(ApproxPosition[0][1] + ApproxPosition[1][1] / 2)
+        ObjCenter_dev =  ObjCenter - Center[1]
 
-    #lets assume that camera field is 80 degrees range
-    PixelsToDegrees = 0.125 * ObjCenter_dev
-    #i assumed that because i sliced the image to 8 slices (every slice equals 10 degrees) => 0.125
+        #lets assume that camera field is 80 degrees range
+        PixelsToDegrees = 0.125 * ObjCenter_dev
+        #i assumed that because i sliced the image to 8 slices (every slice equals 10 degrees) => 0.125
 
     return PixelsToDegrees
 
+def Fit_H_V_line(points_param):
+
+    #x fit
+    x_mean = np.mean(points_param[:, 0])
+
+    #y fit
+    y_mean = np.mean(points_param[:, 1])
+
+    #validation
+    dev_x = np.absolute(points_param[:, 0] - x_mean)
+    dev_y = np.absolute(points_param[:, 1] - y_mean)
+    dev_m_x = np.mean(dev_x)
+    dev_m_y = np.mean(dev_y)
+
+    if dev_m_x < dev_m_y: #x, y format
+        return [round(x_mean), 480] #vertical
+    else:
+        return [round(y_mean), 320] #horizontal
+        #shouldnt be 320, incorrect metrict, fix needed TODO:
 
 def LBdetection(full_image):
     #line break detection (to detect coordinations and size of object in camera feed)
@@ -28,6 +49,7 @@ def LBdetection(full_image):
     # -> slicing -> contours -> computing centroids -> kmeans 
     # -> object bounding rect
 
+    Boundaries = []
     """
     TODO: setup, test and clean
     rawCapture.truncate(0)
@@ -95,7 +117,7 @@ def LBdetection(full_image):
 
     contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-    #cont = np.zeros((im_height, im_width, 3), dtype=np.uint8)
+    cont = np.zeros((im_height, im_width, 3), dtype=np.uint8)
     #points_arr0 = cont.copy()
     #points_arr1 = cont.copy()
     #approx = cont.copy()
@@ -115,6 +137,38 @@ def LBdetection(full_image):
         #cv2.circle(cont, point_coords[i], 5, (255, 0, 0), -1)
         #cv2.circle(approx, point_coords[i], 5, (0, 0, 255), -1)
         #cv2.drawContours(cont, [contour], 0, (0, 100, 0), 3)
+
+    #point reduction by scanning sliced regions
+    points_sort = point_coords.copy()
+    points_sort = points_sort[points_sort[:, 0].argsort()]
+    points_new = np.zeros((16, 2), dtype=np.uint16)
+
+    for i_slice in range(16):
+        x_reg_min = (40 * i_slice)
+        x_reg_max = x_reg_min + 40
+
+        b_thresh = x_reg_min < points_sort[:, 0]
+        u_thresh = points_sort[:, 0] < x_reg_max
+        points_criteria = points_sort[np.logical_and(b_thresh, u_thresh)]
+
+        if points_criteria.shape[0] > 0:
+            points_criteria = points_criteria[points_criteria[:, 1].argsort()]
+
+            points_new[i_slice] = points_criteria[-1]
+
+    f_index = np.where(points_new[:, 0] == 0)
+
+    points_updated = points_new.copy()
+    points_updated = np.delete(points_new, f_index[0], axis=0) #points_updated is for line detection (x, y format)
+    
+    #outlier deletion by deleting variables under median and bias = 50
+
+    y_component = np.sort(points_updated[:, 1])
+    y_lim = np.median(y_component) - 50
+    points_updated = np.delete(points_updated, np.where(points_updated[:, 1] < y_lim), axis=0)
+
+    #for point_new in points_updated:
+        #cv2.circle(approx, point_new, 5, (0, 0, 255), -1)
 
     if point_coords.shape[0] > 1:
         kmeans = KMeans(2)
@@ -173,8 +227,92 @@ def LBdetection(full_image):
                 ApproxPos[1] = [x_min1, image.shape[0]]
 
                 #cv2.rectangle(approx, (ApproxPos[0][1], ApproxPos[0][0]), (ApproxPos[1][0], ApproxPos[1][1]), (255, 0, 0), 2)
+    
+    """
+        LINE BREAK DONE -> now going to -> WHITE LINE DIST APPROX
+    """
 
-    return ApproxPos
+    #reminder that points_updated is still in x, y format :)
+    #reminder that points_updated is sorted by x component
+
+    #Grouping by 2-point slope (calculating slopes between points)
+
+    lines = []
+    if points_updated.shape[0] != 0:
+        slope_arr = np.zeros(points_updated.shape[0] - 1, dtype=np.float32)
+        for i in range(points_updated.shape[0]):
+            if i == points_updated.shape[0] - 1:
+                break
+
+            point1 = points_updated[i].astype(dtype=np.int16)
+            point2 = points_updated[i+1].astype(dtype=np.int16)
+
+            x1, y1 = point1[0], point1[1]
+            x2, y2 = point2[0], point2[1]
+
+            d_x = (x2 - x1)
+            d_y = (y1 - y2)
+            slope = d_y / d_x
+
+            slope_arr[i] = slope
+
+        #the grouping itself
+        n_kernels = []
+        kernel_len = 1
+        for i in range(slope_arr.shape[0]):
+            if i == slope_arr.shape[0] - 1:
+                break
+
+            current_s = slope_arr[i]
+            next_s = slope_arr[i+1]
+
+            dev = abs(current_s - next_s)
+            if dev > 0.15:
+                n_kernels.append(kernel_len)
+                kernel_len = 1
+            else:
+                kernel_len += 1
+
+        if len(n_kernels) == 0 or len(n_kernels) == 1:
+            #considering all points as a line
+            
+            return_line = Fit_H_V_line(points_updated)
+            lines.append(return_line)
+        else:
+            inc = 0
+            for k in n_kernels:
+                k_data = points_updated[:(k+inc)]
+
+                return_line = Fit_H_V_line(k_data)
+                lines.append(return_line)
+
+                inc += k
+
+        lines_converted = np.asarray(lines)
+
+
+        GroupX = lines_converted[np.where(lines_converted[:, 1] == 320)]
+        GroupY = lines_converted[np.where(lines_converted[:, 1] == 480)]
+
+        if GroupY.shape[0] != 0:
+            nearest_Y = np.min(GroupY[:, 0])
+            lineY = [nearest_Y, 320]
+        else: lineY = []
+        if GroupX.shape[0] != 0:
+            nearest_X = np.min(GroupX[:, 0])
+            lineX = [nearest_X, 480]
+        else: lineX = []
+
+        lines = [lineX, lineY]
+    
+        #TODO: completely rework the algorithm you made because it fucking sucks
+        #if len(lines[0]) == 2:
+        #    cv2.line(approx, (0, lines[0][0]), (480, lines[0][0]), (0, 255, 0), 2)
+        #if len(lines[1]) == 2:
+        #    cv2.line(approx, (lines[1][0], 0), (lines[1][0], 320), (0, 255, 0), 2)
+
+    Boundaries = [lineX, lineY]
+    return ApproxPos, Boundaries
 
     #cv2.imshow("Points 0", points_arr0)
     #cv2.imshow("Points 1", points_arr1)

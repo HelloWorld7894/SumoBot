@@ -43,8 +43,10 @@ MEDIUM_RANGE = 2
 LONG_RANGE = 3
 
 #line sensor pins
-FRONT = [21, 20, 16]
-BACK = [7, 8, 25]
+FRONT = [21, 16] #removed middle pin 20 because my sensors are retarded
+BACK = [7, 25] #same here for middle pin 8
+
+
 
 #H bridge pins
 A1 = 24
