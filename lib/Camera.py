@@ -311,7 +311,7 @@ def LBdetection(full_image):
         #if len(lines[1]) == 2:
         #    cv2.line(approx, (lines[1][0], 0), (lines[1][0], 320), (0, 255, 0), 2)
 
-    Boundaries = [lineX, lineY]
+        Boundaries = [lineX, lineY]
     return ApproxPos, Boundaries
 
     #cv2.imshow("Points 0", points_arr0)

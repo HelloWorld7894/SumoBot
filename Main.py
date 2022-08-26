@@ -68,6 +68,8 @@ class Button:
         sleep(0.2)
         print("Invoked start button")
 
+        Bridge.Stop()
+
         rawCapture = PiRGBArray(Cam, size = (640, 480))
         sleep(0.1)
 
@@ -119,25 +121,28 @@ class Button:
             #check if rotation was invoked
             if Control.LastRotation:
                 #Charge
-                if len(Boundaries) == 0:
+                if len(Boundaries[0]) == 0:
                     #5cm
                     Bridge.Forward(5)
                 else:
                     #Controlling charge by boundaries
-                    if Boundaries[0] <= 60:
+                    if Boundaries[0][0] <= 60:
                         Dist = Control.DegreesToDist * 45
-                        Bridge.Right(Dist)
-                    elif 60 > Boundaries[0] <= 120:
+                        Bridge.Right(Dist, "forward")
+                    elif 60 > Boundaries[0][0] <= 120:
                         Dist = Control.DegreesToDist * 90
-                        Bridge.Right(Dist)
-                    elif 120 > Boundaries[0] <= 180:
+                        Bridge.Right(Dist, "forward")
+                    elif 120 > Boundaries[0][0] <= 180:
                         Dist = Control.DegreesToDist * 90
-                        Bridge.Left(Dist)
+                        Bridge.Left(Dist, "forward")
                     else:
                         Dist = Control.DegreesToDist * 45
-                        Bridge.Left(Dist)
+                        Bridge.Left(Dist, "forward")
 
-                    Bridge.Forward(Boundaries[1] / 32)
+                    if len(Boundaries[1]) == 0:
+                        Bridge.Forward(5)
+                    else:
+                        Bridge.Forward(Boundaries[1][0] / 32)
                 Control.LastRotation = False
 
             #checking distance
@@ -153,7 +158,7 @@ class Button:
                     #turn left
                     Bridge.Left(Dist, "forward")
 
-                servo.Rotate(90)
+                Control.Servo.Rotate(servo, 90)
                 
                 Control.LastRotation = True
 
@@ -163,11 +168,12 @@ class Button:
                     DegreeChange = Camera.CameraCenter(ApproxPos)
                     NewDegrees = Control.Degrees + DegreeChange
                     Control.Servo.Rotate(servo, NewDegrees)
-
+                    pass
                 else:
                     #Camera random centering
                     angle = random.randint(0, 180)
                     Control.Servo.Rotate(servo, angle)
+                    pass
             
 """
 INIT

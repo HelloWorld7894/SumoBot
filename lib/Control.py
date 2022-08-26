@@ -51,8 +51,8 @@ BACK = [7, 25] #same here for middle pin 8
 #H bridge pins
 A1 = 24
 B1 = 23
-A2 = 15
-B2 = 18
+A2 = 17
+B2 = 27
 
 class Accelerometer:
     def __init__(self, address): #address is 0x68
